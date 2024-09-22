@@ -11,7 +11,7 @@
 
 # SpiritTV страничка с демо
 
-[https://codepen.io/HoytII/pen/NWQKdYd](Страничка с демо)
+https://codepen.io/HoytII/pen/NWQKdYd
 
 # Random-switch-of-TV-channels
 
