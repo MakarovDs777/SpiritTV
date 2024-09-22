@@ -1,0 +1,172 @@
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpiriTV</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    #channels-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    iframe {
+      width: 220px;
+      height: 120px;
+      border: none;
+      box-sizing: border-box;
+    }
+
+    iframe.active {
+      border: 4px solid #0f0;
+    }
+
+    iframe.inactive {
+      border: 1px solid #ccc;
+    }
+
+    #btn-container {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+
+    #speed-input {
+      width: 100px;
+    }
+  </style>
+</head>
+<body>
+  <div id="btn-container">
+    <button id="start-btn">Start</button>
+    <button id="stop-btn" disabled>Stop</button>
+    <input type="number" id="speed-input" placeholder="Скорость" min="1" max="10" step="1" value="5">
+  </div>
+  <div id="channels-container"></div>
+
+  <script>
+    // Список каналов
+    const channelUrls = [
+      "https://limehd.tv/channel/1kanal",
+      "https://limehd.tv/channel/rossia1",
+      "https://limehd.tv/channel/match",
+      "https://limehd.tv/channel/ntv",
+      "https://limehd.tv/channel/5kanal",
+      "https://limehd.tv/channel/russiak",
+      "https://limehd.tv/channel/rossia24",
+      "https://limehd.tv/channel/karusel",
+      "https://limehd.tv/channel/otr",
+      "https://limehd.tv/channel/tvc",
+      "https://limehd.tv/channel/rentv",
+      "https://limehd.tv/channel/spas",
+      "https://limehd.tv/channel/sts",
+      "https://limehd.tv/channel/domashniy",
+      "https://limehd.tv/channel/tv3",
+      "https://limehd.tv/channel/pyatnica",
+      "https://limehd.tv/channel/zvezda",
+      "https://limehd.tv/channel/tv3",
+      "https://limehd.tv/channel/tnt"
+    ];
+
+    // Создаем фреймы для каждого канала
+    const channelsContainer = document.getElementById('channels-container');
+    const iframes = channelUrls.map((url) => {
+      const iframe = document.createElement('iframe');
+      iframe.src = url;
+      iframe.allow = "autoplay";
+      iframe.classList.add('inactive');
+      channelsContainer.appendChild(iframe);
+      return iframe;
+    });
+
+    // Функция для случайного переключения между каналами
+    function switchChannel() {
+      // Удаляем класс "active" из всех фреймов
+      iframes.forEach((iframe) => {
+        iframe.classList.remove('active');
+        iframe.classList.add('inactive');
+      });
+
+      const randomIndex = Math.floor(Math.random() * iframes.length);
+
+      // Выбираем случайный канал и делаем его активным
+      const currentIndex = randomIndex;
+      iframes[currentIndex].classList.remove('inactive');
+      iframes[currentIndex].classList.add('active');
+
+      // Включаем звук в активном канале
+      iframes[currentIndex].contentWindow.postMessage('{"method":"setVolume","params":[100]}', '*');
+
+      // Обновляем предыдущий индекс
+      previousIndex = currentIndex;
+    }
+
+    // Инициализация
+    let previousIndex = -1;
+
+    // Флаг, указывающий, что переключение каналов уже запущено
+    let isRunning = false;
+
+    // Обработчики нажатия кнопок "Start" и "Stop"
+    document.getElementById('start-btn').addEventListener('click', () => {
+      if (!isRunning) {
+        // Запускаем переключение каналов
+        intervalId = setInterval(switchChannel, interval);
+        document.getElementById('start-btn').disabled = true;
+        document.getElementById('stop-btn').disabled = false;
+        isRunning = true;
+      }
+    });
+
+    document.getElementById('stop-btn').addEventListener('click', () => {
+      if (isRunning) {
+        // Останавливаем переключение каналов с небольшой задержкой
+        const currentIndex = previousIndex; // Сохраняем текущий индекс активного фрейма
+        setTimeout(() => {
+          clearInterval(intervalId);
+          previousIndex = -1;
+          document.getElementById('start-btn').disabled = false;
+          document.getElementById('stop-btn').disabled = true;
+          isRunning = false;
+
+          // Добавляем класс inactive к текущему активному фрейму
+          iframes[currentIndex] && iframes[currentIndex].classList.remove('active');
+          iframes[currentIndex] && iframes[currentIndex].classList.add('inactive');
+        }, 1100); // Задержка в 1.1 секунды дает время текущему переключению каналов завершиться
+      }
+    });
+
+    // Идентификатор интервала для переключения каналов
+    let intervalId = null;
+
+    // Инициализация интервала переключения каналов
+    let interval = 1000;
+
+    // Функция для генерации случайной задержки в диапазоне от min до max (в миллисекундах)
+    function getRandomDelay(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Обработчик изменения значения в поле ввода скорости
+    document.getElementById('speed-input').addEventListener('change', (event) => {
+      interval = event.target.value * 1000;
+      if (isRunning) {
+        clearInterval(intervalId);
+        intervalId = setInterval(() => {
+          switchChannel();
+          const randomDelay = getRandomDelay(0, interval);
+          setTimeout(() => {}, randomDelay); // Пустая задержка для создания случайной паузы перед следующим переключением
+        }, interval);
+      }
+    });
+  </script>
+</body>
+</html>
